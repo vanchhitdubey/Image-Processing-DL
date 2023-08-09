@@ -1,0 +1,47 @@
+""" Get Max thickness of irregular shape, input mask of 512x512 """
+
+import cv2
+import numpy as np
+
+def max_thickness(label_mask):
+    try:
+        # Check if label 2 is present in the mask
+        if np.any(label_mask == 2):
+            # Convert label_mask to np.uint8 type
+            label_mask_uint8 = (label_mask == 2).astype(np.uint8)
+            
+            # Calculate the distance transform
+            distance_transform = cv2.distanceTransform(label_mask_uint8, cv2.DIST_L2, 5)
+            
+            # Find the maximum distance and its coordinates
+            max_dist = np.max(distance_transform)
+            max_dist_coords = np.argwhere(distance_transform == max_dist)[0]
+            
+            # Calculate the opposite point (half-maximum distance)
+            half_max_dist = max_dist / 2
+            opposite_point_coords = np.argwhere(np.abs(distance_transform - half_max_dist) < 1)[0]
+            
+            # Calculate thickness (Euclidean distance between opposite points)
+            thickness = np.linalg.norm(opposite_point_coords - max_dist_coords)
+            
+            return thickness
+        else:
+            # No label 2 found
+            return 0.0
+    except Exception as e:
+        # Handle errors
+        alog.error("Error in calculating max thickness", exc_info=True)
+        return 0.0
+
+# Replace this with your actual label 2 mask
+label_2_patch = np.array([[0, 0, 1, 0, 0],
+                          [0, 1, 1, 1, 0],
+                          [0, 1, 1, 1, 0],
+                          [0, 0, 1, 0, 0],
+                          [0, 0, 0, 0, 0]])
+
+thickness = max_thickness(label_2_patch)
+if thickness > 0:
+    print("Maximum Thickness:", thickness)
+else:
+    print("No valid label 2 patch found.")
